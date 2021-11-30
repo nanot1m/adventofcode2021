@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "lib": ["es2021"],
+    "module": "nodenext",
+    "target": "es2021",
+    "moduleResolution": "nodenext",
+
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  }
+}
