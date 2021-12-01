@@ -1,28 +1,29 @@
 // @ts-check
-
-import { cachedFetchFromAoC } from "./input.js";
-import { solution } from "./solution.js";
+import { fetchFromAoC } from "./input.js"
+import { zip } from "./lib.js"
+import { solution } from "./solution.js"
 
 solution({
-  input: cachedFetchFromAoC,
   solve(input) {
-    const xs = input.split("\n");
-    return [() => part1(xs), () => part2(xs)];
+    const xs = input.split("\n").map((x) => parseInt(x, 10))
+    return [() => part1(xs), () => part2(xs)]
   },
-});
+})
 
 /**
- * @param {string[]} xs
+ * @param {number[]} xs
  */
 function part1(xs) {
-  console.log(arguments);
-  return null;
+  return zip(xs, xs.slice(1))
+    .map(([a, b]) => (a < b ? 1 : 0))
+    .reduce((a, b) => a + b, 0)
 }
 
 /**
- * @param {string[]} xs
+ * @param {number[]} xs
  */
 function part2(xs) {
-  console.log(arguments);
-  return null;
+  return zip(xs, xs.slice(3))
+    .map(([a, b]) => (a < b ? 1 : 0))
+    .reduce((a, b) => a + b, 0)
 }

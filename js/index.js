@@ -1,12 +1,12 @@
-import { exec } from "child_process";
-import { promises as fsPromises } from "fs";
-import { dirname } from "path";
-import { fileURLToPath } from "url";
+import { exec } from "child_process"
+import { promises as fsPromises } from "fs"
+import { dirname } from "path"
+import { fileURLToPath } from "url"
 
-const day = process.argv[2];
+const day = process.argv[2]
 
 if (day) {
-  execDay(day).then(console.log);
+  execDay(day).then(console.log)
 } else {
   fsPromises
     .readdir(dirname(fileURLToPath(import.meta.url)))
@@ -17,23 +17,23 @@ if (day) {
     .then((promises) =>
       promises.reduce(
         (acc, promise) => acc.then(() => promise).then(console.log),
-        Promise.resolve()
-      )
-    );
+        Promise.resolve(),
+      ),
+    )
 }
 
 function execDay(n) {
   return new Promise((resolve) => {
     exec(`node ${n}.js`, (error, stdout, stderr) => {
       if (error) {
-        resolve(error.message);
-        return;
+        resolve(error.message)
+        return
       }
       if (stderr) {
-        resolve(stderr);
-        return;
+        resolve(stderr)
+        return
       }
-      resolve(stdout);
-    });
-  });
+      resolve(stdout)
+    })
+  })
 }

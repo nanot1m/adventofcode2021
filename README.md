@@ -18,5 +18,11 @@ cd js
 To run the solution of the day 1, run the following command:
 
 ```
-node index.js 1
+npm run solve 1
+```
+
+To create the template for the day 2, run the following command:
+
+```
+npm run prepare 2.js
 ```
