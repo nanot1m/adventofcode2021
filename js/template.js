@@ -4,6 +4,7 @@ import { solution } from "./solution.js"
 
 solution({
   solve(input) {
+    console.log(input)
     return [() => part1(input), () => part2(input)]
   },
 })
@@ -12,7 +13,6 @@ solution({
  * @param {string} input
  */
 function part1(input) {
-  console.log(input)
   return null
 }
 
@@ -20,6 +20,5 @@ function part1(input) {
  * @param {string} input
  */
 function part2(input) {
-  console.log(input)
   return null
 }

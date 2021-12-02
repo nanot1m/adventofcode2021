@@ -26,6 +26,23 @@ export function readFromFileSystem(dayN, trim = true) {
 }
 
 /**
+ * @template T
+ */
+export class HttpError extends Error {
+  /**
+   * @param {number} statusCode
+   * @param {string} statusMessage
+   * @param {T} body
+   */
+  constructor(statusCode, statusMessage, body) {
+    super(`${statusCode} ${statusMessage}`)
+    this.statusCode = statusCode
+    this.statusMessage = statusMessage
+    this.body = body
+  }
+}
+
+/**
  *
  * @param {string|number} dayN
  * @param {boolean} trim
@@ -49,14 +66,14 @@ export function fetchFromAoC(dayN, trim = true) {
       `https://adventofcode.com/2021/day/${dayN}/input`,
       { headers: { cookie: `session=${SESSION}` } },
       (res) => {
-        if (res.statusCode > 399) {
-          reject(new Error(`HTTP error: ${res.statusCode}`))
-          return
-        }
         res.on("data", (chunk) => {
           text += chunk
         })
         res.on("end", () => {
+          if (res.statusCode > 399) {
+            reject(new HttpError(res.statusCode, res.statusMessage, text))
+            return
+          }
           resolve(trim ? text.trim() : text)
         })
         res.on("error", reject)
@@ -73,7 +90,7 @@ export function fetchFromAoC(dayN, trim = true) {
  * @param {boolean} trim
  * @returns
  */
-export async function cachedFetchFromAoC(dayN, trim = true) {
+export async function cachedFetchFromAoC(dayN, trim = false) {
   const name = join(
     dirname(fileURLToPath(import.meta.url)),
     "..",
