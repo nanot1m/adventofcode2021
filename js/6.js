@@ -1,5 +1,7 @@
 // @ts-check
 
+import { first, iterate, skip } from "./itertools.js"
+import { inc, rotate, sum, update } from "./lib.js"
 import { solution } from "./solution.js"
 
 solution({
@@ -13,30 +15,29 @@ solution({
  * @param {number[]} input
  */
 function part1(input) {
-  return simulate(input, 80)
+  return solve(input, 80)
 }
 
 /**
  * @param {number[]} input
  */
 function part2(input) {
-  return simulate(input, 256)
+  return solve(input, 256)
 }
+
 /**
  *
- * @param {number[]} fishStates
+ * @param {number[]} states
  * @param {number} days
  * @returns {number}
  */
-function simulate(fishStates, days) {
-  const fishCountsByState = Array(9).fill(0)
-  fishStates.forEach((fishState) => {
-    fishCountsByState[fishState]++
-  })
-  while (days--) {
-    const fishCount = fishCountsByState.shift()
-    fishCountsByState[6] += fishCount
-    fishCountsByState.push(fishCount)
-  }
-  return fishCountsByState.reduce((a, b) => a + b)
+function solve(states, days) {
+  const xs = states.reduce(
+    (acc, state) => update(acc, state, inc),
+    Array.from(Array(9), () => 0),
+  )
+
+  /** @param {number[]} $ */
+  const step = ($) => update(rotate($, 1), 6, (x) => x + first($))
+  return sum(first(skip(iterate(xs, step), days)))
 }
