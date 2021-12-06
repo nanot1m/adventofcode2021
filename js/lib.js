@@ -37,3 +37,17 @@ export function zip(xs, ...yss) {
     ),
   )
 }
+
+/**
+ * @param {string} input
+ */
+export function readLines(input) {
+  return input.split("\n")
+}
+
+/**
+ * @param {string} input
+ */
+export function readBlocks(input) {
+  return input.split("\n\n")
+}
