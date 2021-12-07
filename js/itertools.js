@@ -107,3 +107,17 @@ export function* iterate(x, f) {
     yield x
   }
 }
+
+/**
+ * 
+ * @param {Iterable<T>} iterable 
+ * @param {(arg: T) => R} f
+ * 
+ * @template T
+ * @template R 
+ */
+export function* map(iterable, f) {
+  for (const x of iterable) {
+    yield f(x)
+  }
+}
