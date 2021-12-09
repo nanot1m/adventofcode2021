@@ -7,7 +7,7 @@ const currentDay = parse(process.argv[1]).name
 
 const WIDTH = 66
 
-const drawLine = (type) => {
+const drawLine = (/** @type {0 | 1 | 2} */ type) => {
   let [l, r] = type === 1 ? ["╭", "╮"] : type === 2 ? ["╰", "╯"] : ["├", "┤"]
   console.log(
     `${l}${Array(WIDTH - 2)
@@ -16,7 +16,7 @@ const drawLine = (type) => {
   )
 }
 
-const drawText = (text) => console.log(`│ ${text.padEnd(WIDTH - 4, " ")} │`)
+const drawText = (/** @type {string} */text) => console.log(`│ ${text.padEnd(WIDTH - 4, " ")} │`)
 
 /**
  * @param {Object} config
