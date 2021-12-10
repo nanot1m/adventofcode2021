@@ -61,16 +61,16 @@ export async function solution({
       return results
     })
     .then((results) => {
-      let promises = Promise.resolve()
-      if (results[0] != null && submit[1]) {
-        promises = promises.then(() => submitFn(+currentDay, 1, results[0]))
-      }
-      if (results[1] != null && submit[2]) {
-        promises = promises
-          .then(() => new Promise((resolve) => setTimeout(resolve, 5000)))
-          .then(() => submitFn(+currentDay, 2, results[1]))
-      }
-      return promises
+      return results
+        .map((result, idx) => [result, idx + 1])
+        .filter(([, level]) => submit[level])
+        .reduce(async (acc, [result, level], idx) => {
+          await acc
+          if (idx > 0) {
+            await new Promise((resolve) => setTimeout(resolve, 5000))
+          }
+          return submitFn(Number(currentDay), level, result)
+        }, Promise.resolve())
     })
     .catch(console.error)
 }
