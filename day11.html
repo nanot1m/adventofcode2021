@@ -12,6 +12,7 @@
         font-family: monospace;
         display: inline-flex;
         flex-direction: column;
+        vertical-align: top;
       }
       .row {
         display: flex;
@@ -177,13 +178,17 @@
           for (const x of range(0, width)) {
             const cell = document.createElement("div")
             cell.className = "cell"
-            cell.textContent = map2d[y][x]
-            row.appendChild(cell)
             if (map2d[y][x] === 0 && prevMap2d?.[y]?.[x] !== 0) {
               cell.classList.add("flash")
             }
+            const inner = document.createElement("div")
+            inner.style.width = +map2d[y][x] + 10 + "px"
+            inner.style.height = +map2d[y][x] + 10 + "px"
             const sat = map2d[y][x] * 10
-            cell.style.backgroundColor = `hsl(0,${sat}%,30%)`
+            inner.style.backgroundColor = `hsl(0,${sat}%,50%)`
+            inner.style.borderRadius = "50%"
+            cell.appendChild(inner)
+            row.appendChild(cell)
           }
           table.appendChild(row)
         }
