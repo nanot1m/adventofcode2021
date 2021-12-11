@@ -7,7 +7,8 @@
     <title>Advent Of Code. Day 11</title>
     <style>
       #table {
-        border: 1px solid black;
+        background: black;
+        color: white;
         font-family: monospace;
         display: inline-flex;
         flex-direction: column;
@@ -18,10 +19,35 @@
       .cell {
         width: 20px;
         height: 20px;
-        border: 1px solid black;
         display: flex;
         align-items: center;
         justify-content: center;
+      }
+
+      .flash {
+        position: relative;
+        animation: flash-light-animate 0.15s ease-out;
+        z-index: 1;
+      }
+
+      @keyframes flash-light-animate {
+        0% {
+          box-shadow: 0 0 0px 0px blue;
+          background-color: transparent;
+        }
+        1% {
+          /* background-color: white; */
+        }
+        90% {
+          box-shadow: 0 0 10px 10px white;
+        }
+        95% {
+          box-shadow: 0 0 10px 10px white;
+          background-color: white;
+        }
+        100% {
+          box-shadow: 0 0 0px 0px blue;
+        }
       }
     </style>
   </head>
@@ -59,17 +85,69 @@
     <p></p>
     <div id="table"></div>
     <p>
-      <label for="current-step">Current Step</label>
-      <input type="range" name="current-step" id="currentStep" min="0" max="0" />
+      <label for="current-step">Current Step</label><br />
+      <input
+        type="range"
+        name="current-step"
+        id="currentStep"
+        min="0"
+        max="0"
+      />
+      <button id="play">Play</button>
     </p>
 
     <script>
       const form = document.getElementById("form")
+      let removePlayPauseEventListener = () => {}
+      let removeStepEventListener = () => {}
 
       form.addEventListener("submit", (e) => {
         e.preventDefault()
         init()
       })
+
+      init()
+
+      function buildPlayPause(history) {
+        removePlayPauseEventListener()
+        const playBtn = document.getElementById("play")
+        let pauseState = true
+        const handleClick = () => {
+          if (pauseState) {
+            pauseState = false
+            playBtn.innerText = "Pause"
+            play()
+          } else {
+            pauseState = true
+            playBtn.innerText = "Play"
+          }
+        }
+        playBtn.addEventListener("click", handleClick)
+        removePlayPauseEventListener = () => {
+          pauseState = true
+          playBtn.innerText = "Play"
+          playBtn.removeEventListener("click", handleClick)
+        }
+
+        function play() {
+          const currentStep = document.getElementById("currentStep")
+
+          function next() {
+            if (pauseState) return
+            let step = parseInt(currentStep.value, 10) + 1
+            if (step === +currentStep.max) {
+              step = 0
+            }
+            currentStep.value = step
+            buildTable(history[step], history[step - 1])
+            if (step < +currentStep.max) {
+              setTimeout(next, 150)
+            }
+          }
+
+          next()
+        }
+      }
 
       function init() {
         const input = document.getElementById("input").value.trim()
@@ -82,11 +160,12 @@
           history.push(map2d.map((line) => line.slice()))
         }
 
-        buildTable(history[0])
+        buildTable(history[0], null)
         buildHistory(history)
+        buildPlayPause(history)
       }
 
-      function buildTable(map2d) {
+      function buildTable(map2d, prevMap2d) {
         const table = document.getElementById("table")
         table.innerHTML = ""
         const height = map2d.length
@@ -100,21 +179,32 @@
             cell.className = "cell"
             cell.textContent = map2d[y][x]
             row.appendChild(cell)
+            if (map2d[y][x] === 0 && prevMap2d?.[y]?.[x] !== 0) {
+              cell.classList.add("flash")
+            }
+            const sat = map2d[y][x] * 10
+            cell.style.backgroundColor = `hsl(0,${sat}%,30%)`
           }
           table.appendChild(row)
         }
       }
 
       function buildHistory(history) {
+        removeStepEventListener()
         const steps = history.length
         const currentStep = document.getElementById("currentStep")
         currentStep.max = steps - 1
+        currentStep.value = 0
 
-        currentStep.addEventListener("input", (e) => {
+        const handleInput = (e) => {
           const step = +e.target.value
-          const map2d = history[step]
-          buildTable(map2d)
-        })
+          buildTable(history[step], history[step - 1])
+        }
+        currentStep.addEventListener("input", handleInput)
+
+        removeStepEventListener = () => {
+          currentStep.removeEventListener("input", handleInput)
+        }
       }
 
       /**
