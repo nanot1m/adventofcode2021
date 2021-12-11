@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Advent Of Code. Day 11</title>
+    <style>
+      #table {
+        border: 1px solid black;
+        font-family: monospace;
+        display: inline-flex;
+        flex-direction: column;
+      }
+      .row {
+        display: flex;
+      }
+      .cell {
+        width: 20px;
+        height: 20px;
+        border: 1px solid black;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Advent Of Code. Day 11</h1>
+    <form id="form">
+      <p>
+        <label for="input">Input:</label><br />
+        <textarea id="input" name="input" rows="10" cols="10">
+4575355623
+3325578426
+7885165576
+4871455658
+3722545312
+8362663832
+5562743324
+4165776412
+1817813675
+4255524632
+        </textarea>
+      </p>
+      <p>
+        <label for="steps">Steps count</label>
+        <input
+          id="steps"
+          name="steps"
+          type="number"
+          value="100"
+          min="1"
+          max="10000"
+        />
+      </p>
+      <input type="submit" value="Simulate" />
+    </form>
+    <p></p>
+    <div id="table"></div>
+    <p>
+      <label for="current-step">Current Step</label>
+      <input type="range" name="current-step" id="currentStep" min="0" max="0" />
+    </p>
+
+    <script>
+      const form = document.getElementById("form")
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault()
+        init()
+      })
+
+      function init() {
+        const input = document.getElementById("input").value.trim()
+        const steps = +document.getElementById("steps").value
+
+        const map2d = parse(input)
+        const history = [map2d.map((line) => line.slice())]
+        for (const n of range(0, steps)) {
+          step(map2d)
+          history.push(map2d.map((line) => line.slice()))
+        }
+
+        buildTable(history[0])
+        buildHistory(history)
+      }
+
+      function buildTable(map2d) {
+        const table = document.getElementById("table")
+        table.innerHTML = ""
+        const height = map2d.length
+        const width = map2d[0].length
+
+        for (const y of range(0, height)) {
+          const row = document.createElement("div")
+          row.className = "row"
+          for (const x of range(0, width)) {
+            const cell = document.createElement("div")
+            cell.className = "cell"
+            cell.textContent = map2d[y][x]
+            row.appendChild(cell)
+          }
+          table.appendChild(row)
+        }
+      }
+
+      function buildHistory(history) {
+        const steps = history.length
+        const currentStep = document.getElementById("currentStep")
+        currentStep.max = steps - 1
+
+        currentStep.addEventListener("input", (e) => {
+          const step = +e.target.value
+          const map2d = history[step]
+          buildTable(map2d)
+        })
+      }
+
+      /**
+       * @param {number} start
+       * @param {number} end
+       * @param {number} step
+       */
+      function* range(start, end, step = 1) {
+        if (start === undefined) {
+          start = 0
+        }
+        if (end === undefined) {
+          end = start
+          start = 0
+        }
+        if (step === undefined) {
+          step = 1
+        }
+        for (let i = start; i < end; i += step) {
+          yield i
+        }
+      }
+
+      /** @typedef {ReturnType<typeof parse>} Map2d */
+
+      /**
+       * @param {string} input
+       */
+      function parse(input) {
+        const map = input
+          .trim()
+          .split("\n")
+          .map((line) => line.split("").map(Number))
+        return map
+      }
+
+      /**
+       *
+       * @param {number} x
+       * @param {number} y
+       * @returns
+       */
+      function getAdjacents(x, y) {
+        return [
+          [x, y - 1],
+          [x, y + 1],
+          [x - 1, y],
+          [x + 1, y],
+          [x + 1, y + 1],
+          [x + 1, y - 1],
+          [x - 1, y + 1],
+          [x - 1, y - 1],
+        ]
+      }
+
+      /**
+       * @param {Map2d} map2d
+       */
+      function step(map2d) {
+        const height = map2d.length
+        const width = map2d[0].length
+        const flashed = new Set()
+
+        function process(/** @type {number} */ x, /** @type {number} */ y) {
+          if (flashed.has(`${x},${y}`)) return
+
+          if (map2d[y][x] < 9) {
+            map2d[y][x] += 1
+            return
+          }
+
+          map2d[y][x] = 0
+          flashed.add(`${x},${y}`)
+
+          getAdjacents(x, y)
+            .filter(([x, y]) => map2d[y]?.[x] != null)
+            .forEach(([x, y]) => process(x, y))
+        }
+
+        for (const y of range(0, height)) {
+          for (const x of range(0, width)) {
+            process(x, y)
+          }
+        }
+
+        return flashed.size
+      }
+    </script>
+  </body>
+</html>
