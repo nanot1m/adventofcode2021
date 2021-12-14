@@ -1,7 +1,6 @@
 // @ts-check
-
-import { range } from "./itertools.js"
-import { readBlocks } from "./lib.js"
+import { List, Map, Range } from "immutable"
+import { inc, readBlocks } from "./lib.js"
 import { solution } from "./solution.js"
 
 solution({
@@ -18,35 +17,48 @@ solution({
  * @returns
  */
 function solve(input, steps) {
-  const [tpl, rulesStr] = readBlocks(input.trim())
+  const [templateStr, rulesStr] = readBlocks(input.trim())
+
+  /** @type {Map<string, string>} */
   const rules = rulesStr
     .split("\n")
     .map((line) => line.split(" -> "))
-    .reduce((acc, [input, output]) => {
-      acc[input] = output
-      return acc
-    }, {})
+    .reduce((acc, [from, to]) => acc.set(from, to), Map())
+  const template = List(templateStr)
 
-  let counts = {}
-  for (let i = 0; i < tpl.length - 1; i++) {
-    counts[tpl[i] + tpl[i + 1]] = (counts[tpl[i] + tpl[i + 1]] || 0) + 1
-  }
+  /** @type {Map<string, number>} */
+  const initCounts = template
+    .zipWith((a, b) => `${a}${b}`, template.skip(1))
+    .reduce((acc, key) => acc.update(key, 0, inc), Map())
 
-  for (const _ of range(0, steps)) {
-    let next = {}
-    for (const key in counts) {
-      next[key[0] + rules[key]] = (next[key[0] + rules[key]] || 0) + counts[key]
-      next[rules[key] + key[1]] = (next[rules[key] + key[1]] || 0) + counts[key]
-    }
-    counts = next
-  }
+  const initFrequencies = Map([
+    [template.first(), 1],
+    [template.last(), 1],
+  ])
 
-  const frequencies = { [tpl[0]]: 1, [tpl[tpl.length - 1]]: 1 }
-  for (const key in counts) {
-    frequencies[key[0]] = (frequencies[key[0]] || 0) + counts[key]
-    frequencies[key[1]] = (frequencies[key[1]] || 0) + counts[key]
-  }
+  const counts = Range()
+    .take(steps)
+    .reduce((counts) => step(counts, rules), initCounts)
 
-  const freqValues = Object.values(frequencies)
-  return (Math.max(...freqValues) - Math.min(...freqValues)) / 2
+  const frequencies = counts.reduce((frequencies, value, key) => {
+    return frequencies
+      .update(key[0], 0, (c) => c + value)
+      .update(key[1], 0, (c) => c + value)
+  }, initFrequencies)
+
+  const freqValues = frequencies.valueSeq()
+  return (freqValues.max() - freqValues.min()) / 2
+}
+
+/**
+ *
+ * @param {Map<string, number>} counts
+ * @param {Map<string, string>} rules
+ */
+function step(counts, rules) {
+  return counts.reduce((nextCounts, value, key) => {
+    return nextCounts
+      .update(key[0] + rules.get(key), 0, (c) => c + value)
+      .update(rules.get(key) + key[1], 0, (c) => c + value)
+  }, Map())
 }
