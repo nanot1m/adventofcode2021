@@ -245,12 +245,12 @@
       function updateMinMaxScale() {
         const width = maxX - minX
         const height = maxY - minY
-        maxScale = Math.min(
+        minScale = Math.min(
           (canvas.width - 200) / width,
           (canvas.height - 200) / height,
         )
-        minScale = maxScale / 10
-        scale = maxScale
+        maxScale = minScale * 10
+        scale = minScale
         dx = canvas.width / devicePixelRatio
         dy = canvas.height / devicePixelRatio
         console.log(canvas.width)
