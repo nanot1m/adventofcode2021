@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Advent Of Code. Day 20</title>
+    <style>
+      *,
+      ::before,
+      ::after {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      html {
+        font-family: sans-serif;
+        background: linear-gradient(-312deg, #eddcdc, #dce0ef, #b3d7f2);
+      }
+
+      .container {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: wrap;
+        margin: 0 auto;
+        padding: 20px 0 0 16px;
+        max-width: 1200px;
+      }
+
+      .container > * {
+        margin-bottom: 16px;
+        margin-right: 16px;
+      }
+
+      textarea {
+        font-family: monospace;
+      }
+
+      canvas {
+        border-radius: 8px;
+        margin-right: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.07),
+          0 4px 8px rgba(0, 0, 0, 0.07), 0 8px 16px rgba(0, 0, 0, 0.07),
+          0 16px 32px rgba(0, 0, 0, 0.07), 0 32px 64px rgba(0, 0, 0, 0.07);
+        background-color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Advent Of Code. Day 20</h1>
+      <form id="form">
+        <p>
+          <label for="input">Input:</label><br />
+          <textarea id="input" name="input" rows="10" cols="10">
+..#.#..#####.#.#.#.###.##.....###.##.#..###.####..#####..#....#..#..##..###..######.###...####..#..#####..##..#.#####...##.#.#..#.##..#.#......#.###.######.###.####...#.##.##..#..#..#####.....#.#....###..#.##......#.....#..#..#..##..#...##.######.####.####.#.#...#.......#..#.#.#...####.##.#......#..#...##.#.##..#...##.#.##..###.#......#.#.......#.#.#.####.###.##...#.....####.#..#..#.##.#....##..#.####....##...##..#...#......#.#.......#.......##..####..#...#.#.#...##..#.#..###..#####........#..####......#..#
+
+#..#.
+#....
+##..#
+..#..
+..###
+        </textarea
+          >
+        </p>
+        <p>
+          <label for="steps">Steps count</label>
+          <input
+            id="steps"
+            name="steps"
+            type="number"
+            value="10"
+            min="1"
+            max="100"
+          />
+        </p>
+        <input type="submit" value="Compute" />
+      </form>
+    </div>
+    <div class="container">
+      <h2 id="status">Press compute</h2>
+      <canvas width="280" height="480"></canvas>
+      <div class="controls">
+        <label for="scale">Scale</label>
+        <input
+          type="range"
+          name="scale"
+          id="scale"
+          min="0.01"
+          max="1"
+          step="0.01"
+        />
+      </div>
+      <div class="controls">
+        <label for="scale">Current step</label>
+        <input
+          type="range"
+          name="current-step"
+          id="currentStep"
+          min="0"
+          max="0"
+          step="0"
+        />
+      </div>
+    </div>
+    <script>
+      const canvas = document.querySelector("canvas")
+      const statusNode = document.getElementById("status")
+      const ctx = canvas.getContext("2d")
+      const scaleInput = document.getElementById("scale")
+      const currentStep = document.getElementById("currentStep")
+
+      const WIDTH = 80
+      const HEIGHT = 40
+      const SCALE = 20
+
+      function prepareCanvas() {
+        ctx.scale(devicePixelRatio, devicePixelRatio)
+        canvas.height = (HEIGHT * SCALE) / devicePixelRatio
+        canvas.width = (WIDTH * SCALE) / devicePixelRatio
+        canvas.style.height = canvas.height + "px"
+        canvas.style.width = canvas.width + "px"
+        canvas.height *= devicePixelRatio
+        canvas.width *= devicePixelRatio
+      }
+      prepareCanvas()
+
+      const form = document.getElementById("form")
+      form.addEventListener("submit", (e) => {
+        e.preventDefault()
+        init()
+      })
+
+      let scale = 0.1
+      let dx = canvas.width / 2
+      let dy = canvas.height / 2
+      let minScale = 0.01
+      let maxScale = 2
+      let minX = Infinity
+      let minY = Infinity
+      let maxX = 0
+      let maxY = 0
+      let history = []
+      let currentImage = null
+
+      let lastOffsets = null
+
+      /**
+       * @param {MouseEvent} event
+       */
+      function handleMouseMove(event) {
+        const { clientX, clientY } =
+          window.TouchEvent && event instanceof window.TouchEvent
+            ? event.changedTouches[0]
+            : event
+
+        if (lastOffsets) {
+          let ddx = clientX - lastOffsets.x
+          let ddy = clientY - lastOffsets.y
+          dx += ddx * devicePixelRatio
+          dy += ddy * devicePixelRatio
+        }
+
+        console.log(scale)
+
+        lastOffsets = {
+          x: clientX,
+          y: clientY,
+        }
+      }
+
+      function initScrollHandlers(event) {
+        event.preventDefault()
+        window.addEventListener("mousemove", handleMouseMove)
+        window.addEventListener("touchmove", handleMouseMove)
+        window.addEventListener("mouseup", removeScrollHandlers)
+        window.addEventListener("touchend", removeScrollHandlers)
+      }
+
+      function removeScrollHandlers() {
+        lastOffsets = null
+        window.removeEventListener("mousemove", handleMouseMove)
+        window.removeEventListener("touchmove", handleMouseMove)
+        window.removeEventListener("mouseup", removeScrollHandlers)
+        window.removeEventListener("touchend", removeScrollHandlers)
+      }
+
+      function applyScale(nextScale) {
+        dx -= (canvas.width / scale - canvas.width / nextScale) / 2
+        dy -= (canvas.height / scale - canvas.height / nextScale) / 2
+        scale = nextScale
+        scaleInput.value = scale
+      }
+
+      canvas.addEventListener("mousedown", initScrollHandlers)
+      canvas.addEventListener("touchstart", initScrollHandlers)
+      canvas.addEventListener("wheel", (event) => {
+        event.preventDefault()
+        let nextScale = Math.max(
+          minScale,
+          Math.min(event.deltaY / 10 + scale, maxScale),
+        )
+        applyScale(nextScale)
+      })
+
+      scaleInput.setAttribute("value", scale)
+      scaleInput.addEventListener("input", (event) => {
+        applyScale(Number(event.target.value))
+      })
+
+      function clear(value) {
+        ctx.fillStyle = value ? "black" : "white"
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+      }
+
+      function drawStats() {
+        ctx.font = "30px sans-serif"
+        ctx.beginPath()
+        ctx.moveTo(0, 0)
+        ctx.fillStyle = "black"
+        ctx.fillText("Scale: " + scale.toFixed(2), 10, 40)
+        ctx.fillText("dx: " + dx.toFixed(2), 10, 80)
+        ctx.fillText("dy: " + dy.toFixed(2), 10, 120)
+        ctx.closePath()
+      }
+
+      function draw() {
+        clear(currentImage?.defaultValue)
+        if (currentImage) {
+          for (const [x, y, value] of currentImage) {
+            ctx.fillStyle = value ? "black" : "white"
+            ctx.fillRect(x * scale + dx, y * scale + dy, scale, scale)
+          }
+        }
+        requestAnimationFrame(draw)
+      }
+      draw()
+
+      function updateMinMaxScale() {
+        const width = maxX - minX
+        const height = maxY - minY
+        minScale = Math.min(
+          (canvas.width - 200) / width,
+          (canvas.height - 200) / height,
+        )
+        maxScale = minScale * 10
+        scale = minScale
+        dx = canvas.width / devicePixelRatio
+        dy = canvas.height / devicePixelRatio
+        console.log(canvas.width)
+        console.log(canvas.height)
+        scaleInput.setAttribute("min", minScale)
+        scaleInput.setAttribute("max", maxScale)
+        scaleInput.setAttribute("value", minScale)
+      }
+
+      function init() {
+        const input = document.getElementById("input").value.trim()
+        const steps = +document.getElementById("steps").value
+        statusNode.innerHTML = "Computing..."
+        setTimeout(() => {
+          history = compute(input, steps)
+          statusNode.innerHTML = "Ready"
+
+          const lastImage = history[history.length - 1]
+          currentImage = lastImage
+          minX = lastImage.minX
+          minY = lastImage.minY
+          maxX = lastImage.maxX
+          maxY = lastImage.maxY
+          updateMinMaxScale()
+
+          currentStep.setAttribute("max", history.length - 1)
+          currentStep.value = history.length - 1
+        }, 50)
+      }
+
+      currentStep.addEventListener("input", (event) => {
+        const step = +event.target.value
+        currentImage = history[step]
+      })
+
+      function createImageMap() {
+        const map = {}
+        let minX = Infinity
+        let minY = Infinity
+        let maxX = -Infinity
+        let maxY = -Infinity
+
+        return {
+          /**
+           * @param {number} x
+           * @param {number} y
+           * @param {number} value
+           */
+          set(x, y, value) {
+            map[x] ??= {}
+            map[x][y] = value
+
+            if (x < minX) minX = x
+            if (x > maxX) maxX = x
+            if (y < minY) minY = y
+            if (y > maxY) maxY = y
+          },
+          /**
+           * @param {number} x
+           * @param {number} y
+           */
+          get(x, y) {
+            if (x < minX || x > maxX || y < minY || y > maxY) {
+              return this.defaultValue
+            }
+            return map[x]?.[y] ?? 0
+          },
+          [Symbol.iterator]: function* () {
+            for (let x = minX - 1; x <= maxX + 1; x++) {
+              for (let y = minY - 1; y <= maxY + 1; y++) {
+                yield /** @type {const} */ ([x, y, this.get(x, y)])
+              }
+            }
+          },
+          defaultValue: 0,
+          get minX() {
+            return minX
+          },
+          get minY() {
+            return minY
+          },
+          get maxX() {
+            return maxX
+          },
+          get maxY() {
+            return maxY
+          },
+        }
+      }
+
+      /** @typedef {ReturnType<typeof createImageMap>} ImageMap */
+
+      /**
+       *
+       * @param {number} x
+       * @param {number} y
+       * @param {ImageMap} imageMap
+       * @param {string} algorithm
+       * @returns
+       */
+      const getPixelNextState = (x, y, imageMap, algorithm) => {
+        let result = ""
+        for (let yy = y - 1; yy <= y + 1; yy++) {
+          for (let xx = x - 1; xx <= x + 1; xx++) {
+            result += Number(imageMap.get(xx, yy))
+          }
+        }
+        return algorithm[parseInt(result, 2)] === "#" ? 1 : 0
+      }
+
+      /**
+       *
+       * @param {ImageMap} imageMap
+       * @param {string} algorithm
+       * @returns
+       */
+      function step(imageMap, algorithm) {
+        const nextMap = createImageMap()
+        for (const [x, y] of imageMap) {
+          nextMap.set(x, y, getPixelNextState(x, y, imageMap, algorithm))
+        }
+        if (algorithm[0] === "#") {
+          nextMap.defaultValue = imageMap.defaultValue === 1 ? 0 : 1
+        }
+        return nextMap
+      }
+
+      /**
+       *
+       * @param {string} input
+       * @param {number} steps
+       * @returns
+       */
+      function compute(input, steps) {
+        const [algorithm, inputImage] = input.trim().split("\n\n")
+        const image = inputImage.split("\n")
+
+        let imageMap = createImageMap()
+        for (let y = 0; y < image.length; y++) {
+          for (let x = 0; x < image[y].length; x++) {
+            imageMap.set(x, y, image[y][x] === "#" ? 1 : 0)
+          }
+        }
+
+        const history = [imageMap]
+        for (const _ of range(0, steps)) {
+          imageMap = step(imageMap, algorithm)
+          history.push(imageMap)
+        }
+
+        return history
+      }
+
+      /**
+       * @param {number} start
+       * @param {number} end
+       * @param {number} step
+       */
+      function* range(start, end, step = 1) {
+        if (start === undefined) {
+          start = 0
+        }
+        if (end === undefined) {
+          end = start
+          start = 0
+        }
+        if (step === undefined) {
+          step = 1
+        }
+        for (let i = start; i < end; i += step) {
+          yield i
+        }
+      }
+    </script>
+  </body>
+</html>
