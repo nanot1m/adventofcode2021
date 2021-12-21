@@ -100,7 +100,17 @@ export function at(xs, n) {
  * @returns
  */
 export function sum(xs) {
-  return xs.reduce((a, b) => a + b, 0)
+  return xs.reduce(add, 0)
+}
+
+/**
+ *
+ * @param {number} a
+ * @param {number} b
+ * @returns
+ */
+export function add(a, b) {
+  return a + b
 }
 
 /**
