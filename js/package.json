@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "solve": "node index.js",
-    "prepare": "cp template.js"
+    "tpl": "cp template.js"
   },
   "keywords": [],
   "author": "",
